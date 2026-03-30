@@ -385,6 +385,16 @@
     }
     .form-field input:focus { border-color: rgba(59,130,246,.6); background: rgba(59,130,246,.07); }
     .form-field input::placeholder { color: var(--muted2); }
+    .popup-select {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--text); font-family: inherit; font-size: 15px;
+      padding: 14px 16px; border-radius: 10px; outline: none;
+      width: 100%; appearance: none; cursor: pointer;
+      transition: border-color .2s;
+    }
+    .popup-select:focus { border-color: rgba(59,130,246,.6); }
+    .popup-select option { background: #0a0f1e; color: #fff; }
     .popup-submit {
       width: 100%; margin-top: 8px;
       background: linear-gradient(135deg, #2563eb, #1d4ed8);
@@ -715,68 +725,64 @@
 <!-- ── POPUP ──────────────────────────────────────────── -->
 <div class="popup-overlay" id="popup" role="dialog" aria-modal="true" aria-label="Solicitar diagnóstico">
   <div class="popup-box">
-    <button class="popup-close" id="popupClose" aria-label="Fechar">×</button>
+    <button class="popup-close" id="popupClose" aria-label="Fechar" type="button">×</button>
     <div class="badge"><span class="badge-dot"></span> Diagnóstico gratuito · 48h</div>
     <h2>Vamos começar seu diagnóstico</h2>
-    <p class="popup-sub">Preencha seus dados e em até 48h você recebe uma análise completa da sua estratégia de e-mail.</p>
-    <form class="form-group" id="diagForm" novalidate>
+    <p class="popup-sub">Preencha seus dados e em breve entraremos em contato para agendar sua sessão.</p>
+    <form class="form-group" id="diagForm"
+          action="https://lucasciotti.com.br/diagnostico/submit.php"
+          method="POST">
       <div class="form-field">
         <label for="fname">Nome completo</label>
-        <input type="text" id="fname" name="fname" placeholder="Seu nome" required autocomplete="name" />
+        <input type="text" id="fname" name="name" placeholder="Seu nome" required autocomplete="name" />
       </div>
       <div class="form-field">
         <label for="femail">E-mail</label>
-        <input type="email" id="femail" name="femail" placeholder="seu@email.com" required autocomplete="email" />
+        <input type="email" id="femail" name="email" placeholder="seu@email.com" required autocomplete="email" />
       </div>
       <div class="form-field">
         <label for="fphone">Telefone / WhatsApp</label>
-        <input type="tel" id="fphone" name="fphone" placeholder="(11) 99999-9999" required autocomplete="tel" />
+        <input type="tel" id="fphone" name="phone" placeholder="(11) 99999-9999" required autocomplete="tel" />
       </div>
       <div class="form-field">
         <label for="finsta">Instagram</label>
-        <input type="text" id="finsta" name="finsta" placeholder="@seuinstagram" required />
+        <input type="text" id="finsta" name="insta" placeholder="@seuinstagram" required />
       </div>
       <div class="form-field">
         <label for="ffat">Faturamento mensal do negócio</label>
-        <select id="ffat" name="ffat" required style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--text);font-family:inherit;font-size:15px;padding:14px 16px;border-radius:10px;outline:none;transition:border-color .2s;width:100%;appearance:none;">
-          <option value="" disabled selected style="background:#0a0f1e;">Selecione uma faixa</option>
-          <option value="Até R$5mil/mês" style="background:#0a0f1e;">Até R$5mil/mês</option>
-          <option value="R$5mil a R$20mil/mês" style="background:#0a0f1e;">R$5mil a R$20mil/mês</option>
-          <option value="R$20mil a R$50mil/mês" style="background:#0a0f1e;">R$20mil a R$50mil/mês</option>
-          <option value="R$50mil a R$100mil/mês" style="background:#0a0f1e;">R$50mil a R$100mil/mês</option>
-          <option value="Acima de R$100mil/mês" style="background:#0a0f1e;">Acima de R$100mil/mês</option>
+        <select id="ffat" name="fat" required class="popup-select">
+          <option value="" disabled selected>Selecione uma faixa</option>
+          <option value="Até R$5mil/mês">Até R$5mil/mês</option>
+          <option value="R$5mil a R$20mil/mês">R$5mil a R$20mil/mês</option>
+          <option value="R$20mil a R$50mil/mês">R$20mil a R$50mil/mês</option>
+          <option value="R$50mil a R$100mil/mês">R$50mil a R$100mil/mês</option>
+          <option value="Acima de R$100mil/mês">Acima de R$100mil/mês</option>
         </select>
       </div>
-      <!-- UTMs ocultos -->
-      <input type="hidden" id="futm_source"  name="utm_source" />
-      <input type="hidden" id="futm_medium"  name="utm_medium" />
-      <input type="hidden" id="futm_content" name="utm_content" />
-      <input type="hidden" id="futm_term"    name="utm_term" />
+      <!-- UTMs capturados via JS -->
+      <input type="hidden" name="utm_source"  id="futm_source" />
+      <input type="hidden" name="utm_medium"  id="futm_medium" />
+      <input type="hidden" name="utm_content" id="futm_content" />
+      <input type="hidden" name="utm_term"    id="futm_term" />
       <button type="submit" class="popup-submit" id="submitBtn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
         Quero meu diagnóstico gratuito
       </button>
     </form>
-    <div class="popup-msg" id="popupMsg">
-      <p id="popupMsgText"></p>
-    </div>
   </div>
 </div>
 
 <script>
-  // ── captura UTMs da URL e preenche campos ocultos ──────
+  // UTMs
   (function() {
     const p = new URLSearchParams(window.location.search);
-    const map = { utm_source: 'futm_source', utm_medium: 'futm_medium', utm_content: 'futm_content', utm_term: 'futm_term' };
-    Object.entries(map).forEach(([param, id]) => {
-      const val = p.get(param) || sessionStorage.getItem(param) || '';
-      if (p.get(param)) sessionStorage.setItem(param, p.get(param));
-      const el = document.getElementById(id);
-      if (el) el.value = val;
+    ['utm_source','utm_medium','utm_content','utm_term'].forEach(k => {
+      if (p.get(k)) sessionStorage.setItem(k, p.get(k));
+      const el = document.getElementById('f' + k);
+      if (el) el.value = sessionStorage.getItem(k) || '';
     });
   })();
 
-  // ── abrir popup ────────────────────────────────────────
   function openPopup() {
     document.getElementById('popup').classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -786,7 +792,6 @@
     document.body.style.overflow = '';
   }
 
-  // todos os CTAs abrem o popup
   document.querySelectorAll('a[href="#diagnostico"], .cta-box a, a.btn-primary').forEach(el => {
     el.addEventListener('click', e => { e.preventDefault(); openPopup(); });
   });
@@ -794,53 +799,21 @@
   document.getElementById('popup').addEventListener('click', e => { if (e.target === e.currentTarget) closePopup(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closePopup(); });
 
-  // ── submit ─────────────────────────────────────────────
-  document.getElementById('diagForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const btn  = document.getElementById('submitBtn');
-    const msg  = document.getElementById('popupMsg');
-    const msgT = document.getElementById('popupMsgText');
-
-    const name    = document.getElementById('fname').value.trim();
-    const email   = document.getElementById('femail').value.trim();
-    const phone   = document.getElementById('fphone').value.trim();
-    const insta   = document.getElementById('finsta').value.trim();
-    const fat     = document.getElementById('ffat').value.trim();
+  // validação antes de submeter
+  document.getElementById('diagForm').addEventListener('submit', function(e) {
+    const name  = document.getElementById('fname').value.trim();
+    const email = document.getElementById('femail').value.trim();
+    const phone = document.getElementById('fphone').value.trim();
+    const insta = document.getElementById('finsta').value.trim();
+    const fat   = document.getElementById('ffat').value;
     const source  = document.getElementById('futm_source').value;
-    const medium  = document.getElementById('futm_medium').value;
-    const content = document.getElementById('futm_content').value;
-    const term    = document.getElementById('futm_term').value;
-
     if (!name || !email || !phone || !insta || !fat) {
-      msg.className = 'popup-msg error'; msg.style.display = 'block';
-      msgT.textContent = 'Por favor, preencha todos os campos.';
+      e.preventDefault();
+      alert('Por favor, preencha todos os campos.');
       return;
     }
-
-    btn.disabled = true;
-    btn.textContent = 'Enviando...';
-    msg.style.display = 'none';
-
-    try {
-      const res = await fetch('https://lucasciotti.com.br/diagnostico/submit.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, insta, fat, source, medium, content, term })
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (res.ok && data.success) {
-        window.location.href = '/diagnostico-confirmacao';
-      } else {
-        throw new Error(data?.error || 'Erro ao enviar. Tente novamente.');
-      }
-    } catch (err) {
-      msg.className = 'popup-msg error'; msg.style.display = 'block';
-      msgT.textContent = err.message || 'Erro ao enviar. Tente novamente.';
-      btn.disabled = false;
-      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Quero meu diagnóstico gratuito';
-    }
+    // form POST nativo — sem fetch, sem CORS
+    document.getElementById('submitBtn').textContent = 'Enviando...';
   });
 </script>
 </body>

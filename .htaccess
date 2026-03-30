@@ -1,17 +1,22 @@
 Options -Indexes
 DirectoryIndex index.html
 
-# Desativa rewrite do WordPress neste diretório
 RewriteEngine Off
 
-# Sem cache
+# Bypass LiteSpeed Cache
+<IfModule LiteSpeed>
+    CacheDisable public /
+</IfModule>
+
+# Sem cache HTTP
 <IfModule mod_headers.c>
     Header set Cache-Control "no-cache, no-store, must-revalidate"
     Header set Pragma "no-cache"
     Header set Expires "0"
+    Header set X-LiteSpeed-Cache-Control "no-cache"
 </IfModule>
 
-# Permite execução de PHP
+# Garante que PHP é executado
 <FilesMatch "\.php$">
     SetHandler application/x-httpd-php
 </FilesMatch>
