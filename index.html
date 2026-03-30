@@ -729,6 +729,26 @@
         <label for="fphone">Telefone / WhatsApp</label>
         <input type="tel" id="fphone" name="fphone" placeholder="(11) 99999-9999" required autocomplete="tel" />
       </div>
+      <div class="form-field">
+        <label for="finsta">Instagram</label>
+        <input type="text" id="finsta" name="finsta" placeholder="@seuinstagram" required />
+      </div>
+      <div class="form-field">
+        <label for="ffat">Faturamento mensal do negócio</label>
+        <select id="ffat" name="ffat" required style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--text);font-family:inherit;font-size:15px;padding:14px 16px;border-radius:10px;outline:none;transition:border-color .2s;width:100%;appearance:none;">
+          <option value="" disabled selected style="background:#0a0f1e;">Selecione uma faixa</option>
+          <option value="Até R$5mil/mês" style="background:#0a0f1e;">Até R$5mil/mês</option>
+          <option value="R$5mil a R$20mil/mês" style="background:#0a0f1e;">R$5mil a R$20mil/mês</option>
+          <option value="R$20mil a R$50mil/mês" style="background:#0a0f1e;">R$20mil a R$50mil/mês</option>
+          <option value="R$50mil a R$100mil/mês" style="background:#0a0f1e;">R$50mil a R$100mil/mês</option>
+          <option value="Acima de R$100mil/mês" style="background:#0a0f1e;">Acima de R$100mil/mês</option>
+        </select>
+      </div>
+      <!-- UTMs ocultos -->
+      <input type="hidden" id="futm_source"  name="utm_source" />
+      <input type="hidden" id="futm_medium"  name="utm_medium" />
+      <input type="hidden" id="futm_content" name="utm_content" />
+      <input type="hidden" id="futm_term"    name="utm_term" />
       <button type="submit" class="popup-submit" id="submitBtn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
         Quero meu diagnóstico gratuito
@@ -741,8 +761,17 @@
 </div>
 
 <script>
-  const AC_URL   = 'https://lucasciotti.api-us1.com';
-  const AC_KEY   = '079c71b21b1e5e773d12625feeb76f59a027bef9b68ce48102c3ff1aa0f0dd8a11b83244';
+  // ── captura UTMs da URL e preenche campos ocultos ──────
+  (function() {
+    const p = new URLSearchParams(window.location.search);
+    const map = { utm_source: 'futm_source', utm_medium: 'futm_medium', utm_content: 'futm_content', utm_term: 'futm_term' };
+    Object.entries(map).forEach(([param, id]) => {
+      const val = p.get(param) || sessionStorage.getItem(param) || '';
+      if (p.get(param)) sessionStorage.setItem(param, p.get(param));
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    });
+  })();
 
   // ── abrir popup ────────────────────────────────────────
   function openPopup() {
@@ -769,11 +798,17 @@
     const msg  = document.getElementById('popupMsg');
     const msgT = document.getElementById('popupMsgText');
 
-    const name  = document.getElementById('fname').value.trim();
-    const email = document.getElementById('femail').value.trim();
-    const phone = document.getElementById('fphone').value.trim();
+    const name    = document.getElementById('fname').value.trim();
+    const email   = document.getElementById('femail').value.trim();
+    const phone   = document.getElementById('fphone').value.trim();
+    const insta   = document.getElementById('finsta').value.trim();
+    const fat     = document.getElementById('ffat').value.trim();
+    const source  = document.getElementById('futm_source').value;
+    const medium  = document.getElementById('futm_medium').value;
+    const content = document.getElementById('futm_content').value;
+    const term    = document.getElementById('futm_term').value;
 
-    if (!name || !email || !phone) {
+    if (!name || !email || !phone || !insta || !fat) {
       msg.className = 'popup-msg error'; msg.style.display = 'block';
       msgT.textContent = 'Por favor, preencha todos os campos.';
       return;
@@ -783,14 +818,11 @@
     btn.textContent = 'Enviando...';
     msg.style.display = 'none';
 
-    const [firstName, ...rest] = name.split(' ');
-    const lastName = rest.join(' ') || '';
-
     try {
-      const res = await fetch('/diagnostico/submit.php', {
+      const res = await fetch('https://lucasciotti.com.br/diagnostico/submit.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone })
+        body: JSON.stringify({ name, email, phone, insta, fat, source, medium, content, term })
       });
 
       const data = await res.json().catch(() => ({}));
