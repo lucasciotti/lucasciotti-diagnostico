@@ -787,41 +787,18 @@
     const lastName = rest.join(' ') || '';
 
     try {
-      const res = await fetch(`${AC_URL}/api/3/contacts`, {
+      const res = await fetch('/diagnostico/submit.php', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Api-Token': AC_KEY
-        },
-        body: JSON.stringify({
-          contact: {
-            email,
-            firstName,
-            lastName,
-            phone
-          }
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone })
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        const contactId = data?.contact?.id;
+      const data = await res.json().catch(() => ({}));
 
-        // aplica a tag [CONSULT] Cadastrou (id: 86)
-        if (contactId) {
-          await fetch(`${AC_URL}/api/3/contactTags`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Api-Token': AC_KEY },
-            body: JSON.stringify({ contactTag: { contact: contactId, tag: 86 } })
-          });
-        }
-
-        this.style.display = 'none';
-        msg.className = 'popup-msg success'; msg.style.display = 'block';
-        msgT.textContent = '✓ Perfeito! Em até 48h você recebe sua análise no e-mail.';
+      if (res.ok && data.success) {
+        window.location.href = '/diagnostico-confirmacao';
       } else {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data?.errors?.[0]?.title || 'Erro ao enviar. Tente novamente.');
+        throw new Error(data?.error || 'Erro ao enviar. Tente novamente.');
       }
     } catch (err) {
       msg.className = 'popup-msg error'; msg.style.display = 'block';
